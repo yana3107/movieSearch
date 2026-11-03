@@ -18,7 +18,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
   return (
     <Card className="movie-card" styles={{ body: { padding: 0 } }}>
       <div className="movie-card-content">
-        {movie.poster_path && (
+        {movie.poster_path ? (
           <Image
             className="movie-poster"
             src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
@@ -26,6 +26,8 @@ export default function MovieCard({ movie }: MovieCardProps) {
             width={120}
             height={190}
           />
+        ) : (
+          <div className="movie-poster-placeholder">No poster available</div>
         )}
 
         <div className="movie-info">
