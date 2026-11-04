@@ -1,14 +1,9 @@
-import { getMovies } from "@/lib/tmdb";
-import MovieList from "./components/MovieList";
+import MovieSearch from "./components/MovieSearch";
 
-export default async function Home() {
-  const movies = await getMovies();
-
+export default function Home() {
   return (
     <main>
-      <h1>Movie Search</h1>
-
-      <MovieList movies={movies} />
+      <MovieSearch />
     </main>
   );
 }

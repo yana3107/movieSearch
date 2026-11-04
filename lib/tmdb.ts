@@ -10,9 +10,15 @@ export type Movie = {
 
 type MoviesResponse = {
   results: Movie[];
+  page: number;
+  total_pages: number;
+  total_results: number;
 };
 
-export async function getMovies(): Promise<Movie[]> {
+export async function getMovies(
+  query: string,
+  page: number,
+): Promise<MoviesResponse> {
   const token = process.env.TMDB_READ_ACCESS_TOKEN;
 
   if (!token) {
@@ -20,7 +26,7 @@ export async function getMovies(): Promise<Movie[]> {
   }
 
   const response = await fetch(
-    "https://api.themoviedb.org/3/search/movie?query=return&include_adult=false&language=en-US&page=1",
+    `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=false&language=en-US&page=${page}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -35,6 +41,5 @@ export async function getMovies(): Promise<Movie[]> {
   }
 
   const data: MoviesResponse = await response.json();
-
-  return data.results;
+  return data;
 }
