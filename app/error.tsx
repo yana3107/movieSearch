@@ -32,7 +32,7 @@ export default function Error({
       <h1>Movie Search</h1>
 
       <Alert
-        message={
+        title={
           isOnline === false ? "No internet connection" : "Something went wrong"
         }
         description={
