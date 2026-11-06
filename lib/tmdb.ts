@@ -8,38 +8,52 @@ export type Movie = {
   genre_ids: number[];
 };
 
-type MoviesResponse = {
+export type MoviesResponse = {
   results: Movie[];
   page: number;
   total_pages: number;
   total_results: number;
 };
 
-export async function getMovies(
-  query: string,
-  page: number,
-): Promise<MoviesResponse> {
+export async function tmdbFetch<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const token = process.env.TMDB_READ_ACCESS_TOKEN;
 
   if (!token) {
     throw new Error("TMDB token is missing");
   }
 
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=false&language=en-US&page=${page}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: "application/json",
-      },
-      cache: "no-store",
+  const response = await fetch(`https://api.themoviedb.org/3${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: "application/json",
+      ...init.headers,
     },
-  );
+    cache: "no-store",
+  });
+
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error("Failed to fetch movies from TMDB");
+    throw new Error(data.status_message || "Failed to fetch data from TMDB");
   }
 
-  const data: MoviesResponse = await response.json();
-  return data;
+  return data as T;
+}
+
+export async function getMovies(
+  query: string,
+  page: number,
+): Promise<MoviesResponse> {
+  const searchParams = new URLSearchParams({
+    query,
+    include_adult: "false",
+    language: "en-US",
+    page: String(page),
+  });
+
+  return tmdbFetch<MoviesResponse>(`/search/movie?${searchParams.toString()}`);
 }

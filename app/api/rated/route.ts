@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tmdbFetch } from "@/lib/tmdb";
+
+type RatedMovie = {
+  id: number;
+  title: string;
+  overview: string;
+  release_date: string;
+  poster_path: string | null;
+  vote_average: number;
+  genre_ids: number[];
+  rating: number;
+};
+
+type RatedMoviesResponse = {
+  results: RatedMovie[];
+  page: number;
+  total_pages: number;
+  total_results: number;
+};
 
 export async function GET(request: NextRequest) {
   try {
-    const token = process.env.TMDB_READ_ACCESS_TOKEN;
-
-    if (!token) {
-      throw new Error("TMDB token is missing");
-    }
-
     const searchParams = request.nextUrl.searchParams;
+
     const guestSessionId = searchParams.get("guest_session_id");
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
@@ -19,39 +33,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const url = new URL(
-      `https://api.themoviedb.org/3/guest_session/${encodeURIComponent(guestSessionId)}/rated/movies`,
-    );
-
-    url.searchParams.set("language", "en-US");
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("sort_by", "created_at.desc");
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: "application/json",
-      },
-      cache: "no-store",
+    const params = new URLSearchParams({
+      language: "en-US",
+      page: String(page),
+      sort_by: "created_at.desc",
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Rated HTTP status:", response.status);
-      console.error("Rated TMDB response:", data);
-
-      return NextResponse.json(data, {
-        status: response.status,
-      });
-    }
+    const data = await tmdbFetch<RatedMoviesResponse>(
+      `/guest_session/${encodeURIComponent(guestSessionId)}/rated/movies?${params}`,
+    );
 
     return NextResponse.json(data);
   } catch (error) {
     console.error("Rated movies route error:", error);
 
     return NextResponse.json(
-      { message: "Failed to fetch rated movies" },
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch rated movies",
+      },
       { status: 500 },
     );
   }

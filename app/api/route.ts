@@ -6,16 +6,19 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
 
     const query = searchParams.get("query") || "";
-    const page = Number(searchParams.get("page")) || 1;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
     const data = await getMovies(query, page);
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
+    console.error("Movies route error:", error);
 
     return NextResponse.json(
-      { message: "Failed to fetch movies" },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to fetch movies",
+      },
       { status: 500 },
     );
   }

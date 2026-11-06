@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tmdbFetch } from "@/lib/tmdb";
+
+type RatingResponse = {
+  success: boolean;
+  status_code: number;
+  status_message?: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const token = process.env.TMDB_READ_ACCESS_TOKEN;
-
-    if (!token) {
-      throw new Error("TMDB token is missing");
-    }
-
     const body = await request.json();
 
     const { movieId, guestSessionId, rating } = body;
@@ -26,38 +27,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const url = new URL(
-      `https://api.themoviedb.org/3/movie/${encodeURIComponent(String(movieId))}/rating`,
-    );
-
-    url.searchParams.set("guest_session_id", guestSessionId);
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ value: rating }),
+    const params = new URLSearchParams({
+      guest_session_id: guestSessionId,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("TMDB rating error:", data);
-
-      return NextResponse.json(data, {
-        status: response.status,
-      });
-    }
+    const data = await tmdbFetch<RatingResponse>(
+      `/movie/${encodeURIComponent(String(movieId))}/rating?${params}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ value: rating }),
+      },
+    );
 
     return NextResponse.json(data);
   } catch (error) {
     console.error("Rate movie route error:", error);
 
     return NextResponse.json(
-      { message: "Failed to rate movie" },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to rate movie",
+      },
       { status: 500 },
     );
   }
