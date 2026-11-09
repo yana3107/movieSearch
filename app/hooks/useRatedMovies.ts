@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Movie } from "@/lib/tmdb";
 
 export type RatedMovie = Movie & {
@@ -31,17 +31,12 @@ export function useRatedMovies(
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
 
-  const loadedSessionId = useRef<string | null>(null);
-
   useEffect(() => {
     if (!guestSessionId || !enabled) {
       return;
     }
 
-    if (loadedSessionId.current === guestSessionId) {
-      return;
-    }
-
+    const sessionId = guestSessionId;
     let ignore = false;
 
     async function fetchRatedMovies() {
@@ -50,7 +45,7 @@ export function useRatedMovies(
         setError(null);
 
         const firstResponse = await fetch(
-          `/api/rated?guest_session_id=${encodeURIComponent(guestSessionId!)}&page=1`,
+          `/api/rated?guest_session_id=${encodeURIComponent(sessionId)}&page=1`,
         );
 
         const firstData: RatedMoviesResponse | ApiError =
@@ -76,14 +71,16 @@ export function useRatedMovies(
           startPage += 5
         ) {
           const pageNumbers = Array.from(
-            { length: Math.min(5, firstData.total_pages - startPage + 1) },
+            {
+              length: Math.min(5, firstData.total_pages - startPage + 1),
+            },
             (_, index) => startPage + index,
           );
 
           const pageResults = await Promise.all(
             pageNumbers.map(async (page) => {
               const response = await fetch(
-                `/api/rated?guest_session_id=${encodeURIComponent(guestSessionId!)}&page=${page}`,
+                `/api/rated?guest_session_id=${encodeURIComponent(sessionId)}&page=${page}`,
               );
 
               const data: RatedMoviesResponse | ApiError =
@@ -119,7 +116,7 @@ export function useRatedMovies(
         setAllRatedMovies(movies);
         setUserRatings(ratings);
         setTotalResults(firstData.total_results);
-        loadedSessionId.current = guestSessionId;
+        setCurrentPage(1);
       } catch (error) {
         if (!ignore) {
           setError(
@@ -146,18 +143,38 @@ export function useRatedMovies(
     return allRatedMovies.slice(startIndex, startIndex + PAGE_SIZE);
   }, [allRatedMovies, currentPage]);
 
-  const updateUserRating = useCallback((movieId: number, rating: number) => {
-    setUserRatings((previousRatings) => ({
-      ...previousRatings,
-      [movieId]: rating,
-    }));
+  const updateUserRating = useCallback(
+    (movie: Movie, rating: number) => {
+      setUserRatings((previousRatings) => ({
+        ...previousRatings,
+        [movie.id]: rating,
+      }));
 
-    setAllRatedMovies((previousMovies) =>
-      previousMovies.map((movie) =>
-        movie.id === movieId ? { ...movie, rating } : movie,
-      ),
-    );
-  }, []);
+      const movieExists = allRatedMovies.some((item) => item.id === movie.id);
+
+      const updatedMovie: RatedMovie = {
+        ...movie,
+        rating,
+      };
+
+      setAllRatedMovies((previousMovies) => {
+        if (movieExists) {
+          return previousMovies.map((item) =>
+            item.id === movie.id ? updatedMovie : item,
+          );
+        }
+
+        return [updatedMovie, ...previousMovies];
+      });
+
+      if (!movieExists) {
+        setTotalResults((previousTotal) => previousTotal + 1);
+      }
+
+      setCurrentPage(1);
+    },
+    [allRatedMovies],
+  );
 
   return {
     ratedMovies,

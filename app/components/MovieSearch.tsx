@@ -50,6 +50,7 @@ function MovieSearch() {
     if (!query.trim()) {
       return;
     }
+
     const debouncedSearch = debounce(async () => {
       setLoading(true);
       setError("");
@@ -94,6 +95,7 @@ function MovieSearch() {
       debouncedSearch.cancel();
     };
   }, [query, currentPage]);
+
   function handleQueryChange(value: string) {
     setQuery(value);
 
@@ -105,8 +107,8 @@ function MovieSearch() {
     }
   }
 
-  function handleRated(movieId: number, rating: number) {
-    updateUserRating(movieId, rating);
+  function handleRated(movie: Movie, rating: number) {
+    updateUserRating(movie, rating);
   }
 
   return (

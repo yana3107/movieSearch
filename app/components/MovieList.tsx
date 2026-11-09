@@ -7,7 +7,7 @@ type MovieListProps = {
   movies: Movie[];
   guestSessionId: string | null;
   userRatings: Record<number, number>;
-  onRated: (movieId: number, rating: number) => void;
+  onRated: (movie: Movie, rating: number) => void;
 };
 
 export default function MovieList({

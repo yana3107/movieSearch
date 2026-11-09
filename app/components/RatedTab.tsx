@@ -2,6 +2,7 @@
 
 import { Alert, Pagination, Spin } from "antd";
 
+import type { Movie } from "@/lib/tmdb";
 import type { RatedMovie } from "../hooks/useRatedMovies";
 import MovieList from "./MovieList";
 
@@ -14,7 +15,7 @@ type RatedTabProps = {
   totalResults: number;
   guestSessionId: string | null;
   userRatings: Record<number, number>;
-  onRated: (movieId: number, rating: number) => void;
+  onRated: (movie: Movie, rating: number) => void;
 };
 
 function RatedTab({

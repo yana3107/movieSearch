@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tmdbFetch } from "@/lib/tmdb";
+import { TMDBError, tmdbFetch } from "@/lib/tmdb";
 
 type RatedMovie = {
   id: number;
@@ -45,6 +45,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof TMDBError && error.status === 404) {
+      return NextResponse.json({
+        results: [],
+        page: 1,
+        total_pages: 0,
+        total_results: 0,
+      });
+    }
+
     console.error("Rated movies route error:", error);
 
     return NextResponse.json(

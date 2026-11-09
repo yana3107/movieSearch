@@ -12,7 +12,7 @@ type MovieCardProps = {
   movie: Movie;
   guestSessionId: string | null;
   userRating?: number;
-  onRated: (movieId: number, rating: number) => void;
+  onRated: (movie: Movie, rating: number) => void;
 };
 
 function getRatingColor(rating: number) {
@@ -72,7 +72,7 @@ export default function MovieCard({
         );
       }
 
-      onRated(movie.id, rating);
+      onRated(movie, rating);
     } catch (error) {
       setRatingError(
         error instanceof Error ? error.message : "Unable to save rating",

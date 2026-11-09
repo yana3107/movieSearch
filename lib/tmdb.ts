@@ -15,6 +15,16 @@ export type MoviesResponse = {
   total_results: number;
 };
 
+export class TMDBError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "TMDBError";
+    this.status = status;
+  }
+}
+
 export async function tmdbFetch<T>(
   path: string,
   init: RequestInit = {},
@@ -38,7 +48,10 @@ export async function tmdbFetch<T>(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.status_message || "Failed to fetch data from TMDB");
+    throw new TMDBError(
+      data.status_message || "Failed to fetch data from TMDB",
+      response.status,
+    );
   }
 
   return data as T;
